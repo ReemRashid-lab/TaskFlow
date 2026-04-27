@@ -1,0 +1,98 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;
+    }
+
+    function isSignedIn() { return request.auth != null; }
+    function isValidId(id) { return id is string && id.size() > 0 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); }
+    function incoming() { return request.resource.data; }
+    function existing() { return resource.data; }
+
+    function hasAccount() { return exists(/databases/$(database)/documents/users/$(request.auth.uid)); }
+    function getUserData() { return get(/databases/$(database)/documents/users/$(request.auth.uid)).data; }
+    function isAdmin() { 
+      return isSignedIn() && (
+        (hasAccount() && getUserData().role == 'Admin') || 
+        request.auth.token.email == 'ilifekidstab7@gmail.com'
+      ); 
+    }
+    function isManager() { return isSignedIn() && hasAccount() && getUserData().role == 'Manager'; }
+
+    // USERS COLLECTION
+    function isValidUser(data) {
+      return data.keys().hasAll(['userId', 'staffId', 'name', 'role', 'createdAt']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.staffId is string && data.staffId.size() <= 128 &&
+             data.name is string && data.name.size() <= 200 &&
+             data.role in ['Admin', 'Manager', 'Staff'] &&
+             data.createdAt is string;
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn();
+      allow list: if isSignedIn(); // We need all staff to be listable for Managers assigning tasks. No PII is present in this doc.
+      
+      // Only Admin can create users, or a user can bootstrap themselves if they are the first user (for demo purposes) or we just require an Admin to create.
+      allow create: if isSignedIn() && isValidId(userId) && incoming().userId == userId && 
+                    (isAdmin() || (incoming().role == 'Staff' && incoming().userId == request.auth.uid)); 
+      
+      allow update: if isSignedIn() && isValidUser(incoming()) && (
+        isAdmin() || 
+        (incoming().userId == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['name']))
+      );
+      allow delete: if isAdmin();
+    }
+
+    // TASKS COLLECTION
+    function isValidTask(data) {
+      return data.keys().hasAll(['taskId', 'refNo', 'title', 'deadline', 'priority', 'status', 'assignedTo', 'managerId', 'createdAt', 'updatedAt']) &&
+             data.taskId is string && data.taskId.size() <= 128 &&
+             data.refNo is string && data.refNo.size() <= 128 &&
+             data.title is string && data.title.size() <= 200 &&
+             data.deadline is string && data.deadline.size() <= 100 &&
+             data.priority in ['Low', 'Medium', 'High'] &&
+             data.status in ['Pending', 'In Progress', 'Completed', 'Needs Resubmission'] &&
+             data.assignedTo is string && data.assignedTo.size() <= 128 &&
+             data.managerId is string && data.managerId.size() <= 128 &&
+             data.createdAt is string && data.updatedAt is string;
+    }
+
+    match /tasks/{taskId} {
+      allow get: if isSignedIn() && (isAdmin() || isManager() || resource.data.assignedTo == request.auth.uid);
+      allow list: if isSignedIn() && (isAdmin() || isManager() || resource.data.assignedTo == request.auth.uid);
+      
+      allow create: if isSignedIn() && isValidId(taskId) && (isAdmin() || isManager()) && isValidTask(incoming()) && incoming().managerId == request.auth.uid && exists(/databases/$(database)/documents/users/$(incoming().assignedTo));
+      
+      allow update: if isSignedIn() && isValidTask(incoming()) && (
+        isAdmin() || 
+        isManager() || 
+        (existing().assignedTo == request.auth.uid && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'staffNotes', 'fileUrl', 'updatedAt']))
+      );
+      
+      allow delete: if isAdmin() || isManager();
+    }
+
+    // NOTIFICATIONS COLLECTION
+    function isValidNotification(data) {
+      return data.keys().hasAll(['notificationId', 'userId', 'message', 'read', 'createdAt']) &&
+             data.notificationId is string && data.notificationId.size() <= 128 &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.message is string && data.message.size() <= 500 &&
+             data.read is bool &&
+             data.createdAt is string;
+    }
+
+    match /notifications/{notificationId} {
+      allow get: if isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      
+      allow create: if isSignedIn() && isValidId(notificationId) && (isAdmin() || isManager()) && isValidNotification(incoming());
+      
+      allow update: if isSignedIn() && existing().userId == request.auth.uid && isValidNotification(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+      
+      allow delete: if existing().userId == request.auth.uid || isAdmin() || isManager();
+    }
+  }
+}

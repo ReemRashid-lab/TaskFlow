@@ -1,0 +1,67 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A staff member in the system.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "The user's Firebase UID." },
+        "staffId": { "type": "string", "description": "The custom staff ID." },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["Admin", "Manager", "Staff"] },
+        "email": { "type": "string", "format": "email" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "staffId", "name", "role", "email", "createdAt"]
+    },
+    "Task": {
+      "title": "Task",
+      "description": "A task assigned to a staff member.",
+      "type": "object",
+      "properties": {
+        "taskId": { "type": "string" },
+        "refNo": { "type": "string", "description": "Unique task reference" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "deadline": { "type": "string" },
+        "priority": { "type": "string", "enum": ["Low", "Medium", "High"] },
+        "status": { "type": "string", "enum": ["Pending", "In Progress", "Completed", "Needs Resubmission"] },
+        "assignedTo": { "type": "string", "description": "UID of the Staff member" },
+        "managerId": { "type": "string", "description": "UID of the Manager or Admin who created it" },
+        "managerNotes": { "type": "string" },
+        "staffNotes": { "type": "string" },
+        "fileUrl": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["taskId", "refNo", "title", "deadline", "priority", "status", "assignedTo", "managerId", "createdAt", "updatedAt"]
+    },
+    "Notification": {
+      "title": "Notification",
+      "description": "Alerts for users",
+      "type": "object",
+      "properties": {
+        "notificationId": { "type": "string" },
+        "userId": { "type": "string", "description": "UID of the user receiving the notification" },
+        "message": { "type": "string" },
+        "read": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["notificationId", "userId", "message", "read", "createdAt"]
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles."
+    },
+    "tasks/{taskId}": {
+      "schema": { "$ref": "#/entities/Task" },
+      "description": "Stores all system tasks."
+    },
+    "notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/Notification" },
+      "description": "Stores user notifications."
+    }
+  }
+}

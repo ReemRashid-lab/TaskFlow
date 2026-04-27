@@ -1,0 +1,26 @@
+type User @table {
+  displayName: String!
+  email: String!
+  role: String!
+  photoUrl: String
+  createdAt: Timestamp
+}
+
+type Task @table {
+  title: String!
+  description: String!
+  status: String!
+  priority: String!
+  dueDate: Date!
+  assignee: User
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
+
+type Comment @table {
+  text: String!
+  author: User
+  task: Task
+  createdAt: Timestamp
+  updatedAt: Timestamp
+}
