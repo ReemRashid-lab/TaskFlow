@@ -191,7 +191,7 @@ export default function AdminDashboard() {
               </Select>
             </div>
             <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 mt-4">
-              <button type="button" className="w-full sm:w-auto px-4 py-2 bg-white border border-[#e2e8f0] text-[#1e293b] text-sm font-semibold rounded-md hover:bg-[#f1f5f9] transition-colors" onClick={() => setIsAddUserOpen(false)}>Cancel</button>
+              <button type="button" className="w-full sm:w-auto px-4 py-2 bg-card border-border text-foreground transition-colors text-sm font-semibold rounded-md hover:bg-[#f1f5f9] transition-colors" onClick={() => setIsAddUserOpen(false)}>Cancel</button>
               <button type="submit" className="w-full sm:w-auto px-4 py-2 bg-[#3b82f6] hover:bg-[#2563eb] text-white text-sm font-semibold rounded-md transition-colors">Create User</button>
             </DialogFooter>
           </form>

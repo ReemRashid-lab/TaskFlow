@@ -30,16 +30,16 @@ export default function Register() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f1f5f9] p-4 font-sans">
-      <div className="w-full max-w-md bg-white rounded-xl border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] overflow-hidden">
-        <div className="p-6 text-center border-b border-[#e2e8f0]">
+    <div className="flex min-h-screen items-center justify-center bg-background p-4 font-sans">
+      <div className="w-full max-w-md bg-card rounded-xl border border-border shadow-sm overflow-hidden transition-colors">
+        <div className="p-6 text-center border-b border-border">
           <div className="flex justify-center mb-4">
-            <div className="w-10 h-10 bg-[#3b82f6] rounded-md flex items-center justify-center">
-              <Briefcase className="h-5 w-5 text-white" />
+            <div className="w-10 h-10 bg-primary rounded-md flex items-center justify-center">
+              <UserPlus className="h-5 w-5 text-primary-foreground" />
             </div>
           </div>
-          <h2 className="text-2xl font-extrabold tracking-tight text-[#1e293b]">TaskFlow Pro</h2>
-          <p className="text-sm text-[#64748b] mt-1">Create your account with a Staff ID</p>
+          <h2 className="text-2xl font-extrabold tracking-tight text-foreground">Create Account</h2>
+          <p className="text-sm text-muted-foreground mt-1">Join TaskFlow to start managing tasks</p>
         </div>
         <form onSubmit={handleRegister} className="p-6 space-y-4">
           {error && (

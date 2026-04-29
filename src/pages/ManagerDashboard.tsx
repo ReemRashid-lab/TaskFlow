@@ -8,6 +8,9 @@ import { Textarea } from '../components/ui/textarea';
 import { Plus, Search, Filter, Trash2, ArrowUpDown } from 'lucide-react';
 import { format } from 'date-fns';
 import { sendTaskAssignmentEmail } from '../lib/email';
+import AnalyticsSummary from '../components/AnalyticsSummary';
+import KanbanBoard from '../components/KanbanBoard';
+import { LayoutGrid, List, Clock, AlertCircle } from 'lucide-react';
 
 export default function ManagerDashboard() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -21,6 +24,7 @@ export default function ManagerDashboard() {
     title: '', description: '', deadline: '', priority: 'Medium', assignedTo: '', type: 'Simple'
   });
   const [reviewNotes, setReviewNotes] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'board'>('list');
   
   const [filter, setFilter] = useState('All');
   const [search, setSearch] = useState('');
@@ -116,6 +120,58 @@ export default function ManagerDashboard() {
     }
   };
 
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'High': return 'text-destructive';
+      case 'Medium': return 'text-orange-500';
+      case 'Low': return 'text-green-500';
+      default: return 'text-muted-foreground';
+    }
+  };
+
+  const renderTaskCard = (task: any) => (
+    <div key={task.id} className="bg-card rounded-xl border border-border shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex flex-col overflow-hidden h-full transition-colors">
+      <div className="p-4 border-b border-border">
+        <div className="flex justify-between items-start mb-2">
+          <span className="px-2 py-1 bg-muted border border-border rounded text-[0.7rem] font-mono text-muted-foreground">{task.refNo}</span>
+          {getStatusBadge(task.status)}
+        </div>
+        <h3 className="text-sm font-bold text-foreground line-clamp-1">{task.title}</h3>
+        <p className="text-[0.7rem] text-muted-foreground mt-1">Assigned to: <span className="font-semibold">{task.staffName}</span></p>
+      </div>
+      <div className="p-4 flex-1 space-y-3">
+        <div className="space-y-1.5 text-[0.75rem]">
+          <div className="flex items-center text-muted-foreground">
+            <Clock className="mr-2 h-3.5 w-3.5" />
+            Due: {format(new Date(task.deadline), 'MMM d')}
+          </div>
+          <div className="flex items-center text-muted-foreground">
+            <AlertCircle className="mr-2 h-3.5 w-3.5" />
+            Priority: <span className={`ml-1 font-semibold ${getPriorityColor(task.priority)}`}>{task.priority}</span>
+          </div>
+        </div>
+      </div>
+      <div className="p-3 bg-muted/50 border-t border-border flex justify-end gap-2">
+        <button 
+          className="text-primary hover:underline font-semibold text-[0.7rem]"
+          onClick={() => {
+            setSelectedTask(task);
+            setReviewNotes(task.managerNotes || '');
+            setIsReviewOpen(true);
+          }}
+        >
+          Review
+        </button>
+        <button 
+          className="text-destructive hover:text-red-600 transition-colors"
+          onClick={() => handleDeleteTask(task.id)}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  );
+
   if (loading) return <div>Loading...</div>;
 
   return (
@@ -130,37 +186,55 @@ export default function ManagerDashboard() {
         </button>
       </div>
 
-      <div className="bg-white rounded-xl border border-[#e2e8f0] shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex flex-col overflow-hidden">
-        <div className="p-5 border-b border-[#e2e8f0] flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <div className="font-bold text-base text-[#1e293b]">Task Monitoring Overview</div>
+      <AnalyticsSummary tasks={tasks} />
+
+      <div className="bg-white dark:bg-card rounded-xl border border-[#e2e8f0] dark:border-border shadow-[0_1px_3px_rgba(0,0,0,0.05)] flex flex-col overflow-hidden transition-colors">
+        <div className="p-5 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <div className="font-bold text-base text-foreground">Task Monitoring</div>
+            <div className="flex rounded-md border border-border overflow-hidden">
+              <button 
+                onClick={() => setViewMode('list')}
+                className={`p-1.5 ${viewMode === 'list' ? 'bg-muted text-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+              >
+                <List className="h-4 w-4" />
+              </button>
+              <button 
+                onClick={() => setViewMode('board')}
+                className={`p-1.5 ${viewMode === 'board' ? 'bg-muted text-foreground' : 'bg-background text-muted-foreground hover:bg-muted'}`}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
           <div className="flex flex-wrap gap-2">
             <button 
               onClick={() => setFilter('All')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${filter === 'All' ? 'bg-[#f1f5f9] border-[#94a3b8] text-[#1e293b]' : 'bg-white border-[#e2e8f0] text-[#64748b]'}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${filter === 'All' ? 'bg-muted text-foreground border-border transition-colors' : 'bg-card border-border text-muted-foreground transition-colors'}`}
             >
               All Tasks
             </button>
             <button 
               onClick={() => setFilter('Pending')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${filter === 'Pending' ? 'bg-[#f1f5f9] border-[#94a3b8] text-[#1e293b]' : 'bg-white border-[#e2e8f0] text-[#64748b]'}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${filter === 'Pending' ? 'bg-muted text-foreground border-border transition-colors' : 'bg-card border-border text-muted-foreground transition-colors'}`}
             >
               Pending
             </button>
             <button 
               onClick={() => setFilter('In Progress')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${filter === 'In Progress' ? 'bg-[#f1f5f9] border-[#94a3b8] text-[#1e293b]' : 'bg-white border-[#e2e8f0] text-[#64748b]'}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${filter === 'In Progress' ? 'bg-muted text-foreground border-border transition-colors' : 'bg-card border-border text-muted-foreground transition-colors'}`}
             >
               In Progress
             </button>
             <button 
               onClick={() => setFilter('Completed')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${filter === 'Completed' ? 'bg-[#f1f5f9] border-[#94a3b8] text-[#1e293b]' : 'bg-white border-[#e2e8f0] text-[#64748b]'}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${filter === 'Completed' ? 'bg-muted text-foreground border-border transition-colors' : 'bg-card border-border text-muted-foreground transition-colors'}`}
             >
               Completed
             </button>
             <button 
               onClick={() => setFilter('Needs Resubmission')}
-              className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${filter === 'Needs Resubmission' ? 'bg-[#f1f5f9] border-[#94a3b8] text-[#1e293b]' : 'bg-white border-[#e2e8f0] text-[#64748b]'}`}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md border ${filter === 'Needs Resubmission' ? 'bg-muted text-foreground border-border transition-colors' : 'bg-card border-border text-muted-foreground transition-colors'}`}
             >
               Needs Resubmission
             </button>
@@ -177,7 +251,7 @@ export default function ManagerDashboard() {
             </Select>
             <button
               onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="px-3 py-1.5 text-xs font-semibold rounded-md border bg-white border-[#e2e8f0] text-[#64748b] hover:bg-slate-50 flex items-center justify-center"
+              className="px-3 py-1.5 text-xs font-semibold rounded-md border bg-card border-border text-muted-foreground transition-colors hover:bg-slate-50 flex items-center justify-center"
               title="Toggle Sort Order"
             >
               <ArrowUpDown className="h-3.5 w-3.5 mr-1" />
@@ -185,58 +259,68 @@ export default function ManagerDashboard() {
             </button>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr>
-                <th className="bg-[#f8fafc] px-6 py-3 text-[0.7rem] uppercase tracking-wider text-[#64748b] border-b border-[#e2e8f0] font-semibold">Ref No.</th>
-                <th className="bg-[#f8fafc] px-6 py-3 text-[0.7rem] uppercase tracking-wider text-[#64748b] border-b border-[#e2e8f0] font-semibold">Title</th>
-                <th className="bg-[#f8fafc] px-6 py-3 text-[0.7rem] uppercase tracking-wider text-[#64748b] border-b border-[#e2e8f0] font-semibold">Assigned To</th>
-                <th className="bg-[#f8fafc] px-6 py-3 text-[0.7rem] uppercase tracking-wider text-[#64748b] border-b border-[#e2e8f0] font-semibold">Deadline</th>
-                <th className="bg-[#f8fafc] px-6 py-3 text-[0.7rem] uppercase tracking-wider text-[#64748b] border-b border-[#e2e8f0] font-semibold">Status</th>
-                <th className="bg-[#f8fafc] px-6 py-3 text-[0.7rem] uppercase tracking-wider text-[#64748b] border-b border-[#e2e8f0] font-semibold text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTasks.map((task) => (
-                <tr key={task.id} className="hover:bg-[#f8fafc] transition-colors">
-                  <td className="px-6 py-3.5 text-[0.75rem] font-mono text-[#64748b] border-b border-[#e2e8f0]">{task.refNo}</td>
-                  <td className="px-6 py-3.5 text-[0.825rem] text-[#1e293b] border-b border-[#e2e8f0] font-medium">{task.title}</td>
-                  <td className="px-6 py-3.5 text-[0.825rem] text-[#1e293b] border-b border-[#e2e8f0]">{task.staffName}</td>
-                  <td className="px-6 py-3.5 text-[0.825rem] text-[#64748b] border-b border-[#e2e8f0]">{format(new Date(task.deadline), 'MMM d, yyyy')}</td>
-                  <td className="px-6 py-3.5 border-b border-[#e2e8f0]">{getStatusBadge(task.status)}</td>
-                  <td className="px-6 py-3.5 border-b border-[#e2e8f0] text-right">
-                    <div className="flex justify-end space-x-3">
-                      <button 
-                        className="text-[#3b82f6] hover:underline font-semibold text-[0.75rem]"
-                        onClick={() => {
-                          setSelectedTask(task);
-                          setReviewNotes(task.managerNotes || '');
-                          setIsReviewOpen(true);
-                        }}
-                      >
-                        Review
-                      </button>
-                      <button 
-                        className="text-[#ef4444] hover:text-[#dc2626] transition-colors"
-                        onClick={() => handleDeleteTask(task.id)}
-                        title="Delete Task"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-              {filteredTasks.length === 0 && (
-                <tr>
-                  <td colSpan={6} className="text-center py-8 text-[#64748b] text-sm">No tasks found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
         </div>
-        <div className="mt-auto p-4 bg-[#f8fafc] text-[0.75rem] text-[#64748b] flex justify-between border-t border-[#e2e8f0]">
+        {viewMode === 'list' ? (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr>
+                  <th className="bg-muted/50 px-6 py-3 text-[0.7rem] uppercase tracking-wider text-muted-foreground border-b border-border font-semibold">Ref No.</th>
+                  <th className="bg-muted/50 px-6 py-3 text-[0.7rem] uppercase tracking-wider text-muted-foreground border-b border-border font-semibold">Title</th>
+                  <th className="bg-muted/50 px-6 py-3 text-[0.7rem] uppercase tracking-wider text-muted-foreground border-b border-border font-semibold">Assigned To</th>
+                  <th className="bg-muted/50 px-6 py-3 text-[0.7rem] uppercase tracking-wider text-muted-foreground border-b border-border font-semibold">Deadline</th>
+                  <th className="bg-muted/50 px-6 py-3 text-[0.7rem] uppercase tracking-wider text-muted-foreground border-b border-border font-semibold">Status</th>
+                  <th className="bg-muted/50 px-6 py-3 text-[0.7rem] uppercase tracking-wider text-muted-foreground border-b border-border font-semibold text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredTasks.map((task) => (
+                  <tr key={task.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-6 py-3.5 text-[0.75rem] font-mono text-muted-foreground border-b border-border">{task.refNo}</td>
+                    <td className="px-6 py-3.5 text-[0.825rem] text-foreground border-b border-border font-medium">{task.title}</td>
+                    <td className="px-6 py-3.5 text-[0.825rem] text-foreground border-b border-border">{task.staffName}</td>
+                    <td className="px-6 py-3.5 text-[0.825rem] text-muted-foreground border-b border-border">{format(new Date(task.deadline), 'MMM d, yyyy')}</td>
+                    <td className="px-6 py-3.5 border-b border-border">{getStatusBadge(task.status)}</td>
+                    <td className="px-6 py-3.5 border-b border-border text-right">
+                      <div className="flex justify-end space-x-3">
+                        <button 
+                          className="text-primary hover:underline font-semibold text-[0.75rem]"
+                          onClick={() => {
+                            setSelectedTask(task);
+                            setReviewNotes(task.managerNotes || '');
+                            setIsReviewOpen(true);
+                          }}
+                        >
+                          Review
+                        </button>
+                        <button 
+                          className="text-destructive hover:text-red-600 transition-colors"
+                          onClick={() => handleDeleteTask(task.id)}
+                          title="Delete Task"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {filteredTasks.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="text-center py-8 text-muted-foreground text-sm">No tasks found.</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <div className="p-5">
+            <KanbanBoard 
+              tasks={filteredTasks} 
+              renderCard={(task) => renderTaskCard(task)} 
+            />
+          </div>
+        )}
+        <div className="mt-auto p-4 bg-muted/50 text-[0.75rem] text-muted-foreground flex justify-between border-t border-border transition-colors">
           <div>Showing {filteredTasks.length} tasks</div>
           <div>System Status: <span className="text-[#10b981]">● Optimal Performance</span></div>
         </div>

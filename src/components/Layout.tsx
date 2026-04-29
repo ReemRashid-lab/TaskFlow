@@ -1,13 +1,32 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, LayoutDashboard, CheckSquare, Users, Bell, Settings, Menu, X } from 'lucide-react';
+import { LogOut, LayoutDashboard, CheckSquare, Users, Bell, Settings, Menu, X, Sun, Moon } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import NotificationCenter from './NotificationCenter';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isDark, setIsDark] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('theme') === 'dark' || document.documentElement.classList.contains('dark');
+    }
+    return false;
+  });
+
+  React.useEffect(() => {
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
+  const toggleTheme = () => setIsDark(!isDark);
 
   const handleLogout = () => {
     logout();
@@ -52,7 +71,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div className="flex h-[100dvh] bg-[#f1f5f9] text-[#1e293b] font-sans overflow-hidden">
+    <div className="flex h-[100dvh] bg-background text-foreground font-sans overflow-hidden transition-colors duration-300">
       {/* Mobile Menu Overlay */}
       {isMobileMenuOpen && (
         <div 
@@ -108,7 +127,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        <header className="h-16 bg-white border-b border-[#e2e8f0] flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0">
+        <header className="h-16 bg-card border-b border-border flex items-center justify-between px-4 sm:px-6 lg:px-8 shrink-0 transition-colors duration-300">
           <div className="flex items-center gap-3">
             <button 
               className="md:hidden text-[#64748b] hover:text-[#1e293b] p-1" 
@@ -120,20 +139,28 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <input 
                 type="text" 
                 placeholder="Search..." 
-                className="bg-[#f8fafc] border border-[#e2e8f0] px-4 py-2 rounded-lg w-64 lg:w-80 text-sm text-[#64748b] focus:outline-none focus:ring-2 focus:ring-[#3b82f6]"
+                className="bg-muted border border-border px-4 py-2 rounded-lg w-64 lg:w-80 text-sm text-muted-foreground focus:outline-none focus:ring-2 focus:ring-[#3b82f6] transition-colors"
               />
             </div>
           </div>
           
           <div className="flex items-center gap-3 sm:gap-4 ml-auto">
+            <NotificationCenter />
+            <button 
+              onClick={toggleTheme}
+              className="p-2 rounded-lg bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+              title={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            >
+              {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            </button>
             <div className="text-right hidden sm:block">
               <div className="font-semibold text-sm truncate max-w-[150px]">{user?.name}</div>
-              <div className="text-xs text-[#64748b]">{user?.role}</div>
+              <div className="text-xs text-muted-foreground">{user?.role}</div>
             </div>
-            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-[#e2e8f0] rounded-full border-2 border-white shadow-[0_0_0_1px_#cbd5e1] flex items-center justify-center text-[#64748b] font-bold text-sm shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 bg-accent rounded-full border-2 border-card shadow-[0_0_0_1px_#cbd5e1] flex items-center justify-center text-accent-foreground font-bold text-sm shrink-0">
               {user?.name.charAt(0)}
             </div>
-            <button className="sm:hidden text-[#ef4444] p-1 ml-1" onClick={handleLogout} title="Sign Out">
+            <button className="sm:hidden text-destructive p-1 ml-1" onClick={handleLogout} title="Sign Out">
               <LogOut className="h-5 w-5" />
             </button>
           </div>

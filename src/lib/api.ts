@@ -112,21 +112,97 @@ export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
         // We don't throw here to avoid failing the task creation if email fails
       }
 
+      // Create Notification
+      try {
+        await setDoc(doc(collection(db, 'notifications')), {
+          userId: body.assignedTo,
+          title: 'New Task Assigned',
+          message: `You have been assigned: ${body.title}`,
+          type: 'task_assigned',
+          isRead: false,
+          createdAt: new Date().toISOString()
+        });
+      } catch (notifErr) {
+        console.error('Error creating notification:', notifErr);
+      }
+
       return { id: taskId, refNo: nextRefNo };
     }
 
     if (method === 'PUT') {
       const taskId = endpoint.split('/')[2];
-      await updateDoc(doc(db, 'tasks', taskId), {
+      const taskRef = doc(db, 'tasks', taskId);
+      const taskSnap = await getDoc(taskRef);
+      const oldTask = taskSnap.data();
+
+      await updateDoc(taskRef, {
         ...body,
         updatedAt: new Date().toISOString()
       });
+
+      // Create Notification for status change or feedback
+      if (oldTask) {
+        let notifUserId = '';
+        let notifTitle = '';
+        let notifMessage = '';
+
+        if (body.status && body.status !== oldTask.status) {
+          // If staff updates status to Completed, notify Manager
+          if (body.status === 'Completed' || body.status === 'In Progress') {
+            notifUserId = oldTask.managerId;
+            notifTitle = 'Task Update';
+            notifMessage = `Staff updated task ${oldTask.refNo} to ${body.status}`;
+          } 
+          // If manager updates status to Needs Resubmission, notify Staff
+          else if (body.status === 'Needs Resubmission') {
+            notifUserId = oldTask.assignedTo;
+            notifTitle = 'Task Revision Required';
+            notifMessage = `Manager requested revision for task ${oldTask.refNo}`;
+          }
+        } else if (body.managerNotes && body.managerNotes !== oldTask.managerNotes) {
+          notifUserId = oldTask.assignedTo;
+          notifTitle = 'New Manager Feedback';
+          notifMessage = `You received feedback on task ${oldTask.refNo}`;
+        }
+
+        if (notifUserId) {
+          await setDoc(doc(collection(db, 'notifications')), {
+            userId: notifUserId,
+            title: notifTitle,
+            message: notifMessage,
+            type: 'status_update',
+            isRead: false,
+            createdAt: new Date().toISOString()
+          });
+        }
+      }
+
       return { success: true };
     }
 
     if (method === 'DELETE') {
       const taskId = endpoint.split('/')[2];
       await deleteDoc(doc(db, 'tasks', taskId));
+      return { success: true };
+    }
+  }
+
+  // --- /notifications ---
+  if (endpoint === '/notifications' || endpoint.startsWith('/notifications/')) {
+    if (method === 'GET') {
+      const q = query(
+        collection(db, 'notifications'), 
+        where('userId', '==', user.uid)
+      );
+      const snapshot = await getDocs(q);
+      return snapshot.docs
+        .map(d => ({ id: d.id, ...d.data() }))
+        .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    }
+
+    if (method === 'PUT') {
+      const notifId = endpoint.split('/')[2];
+      await updateDoc(doc(db, 'notifications', notifId), body);
       return { success: true };
     }
   }
