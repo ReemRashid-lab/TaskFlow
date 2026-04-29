@@ -241,7 +241,7 @@ export default function ManagerDashboard() {
           </div>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-4 sm:mt-0">
             <Select value={sortField} onValueChange={(val: any) => setSortField(val)}>
-              <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs bg-white">
+              <SelectTrigger className="w-full sm:w-[130px] h-8 text-xs bg-card border-border text-foreground transition-colors">
                 <SelectValue placeholder="Sort By" />
               </SelectTrigger>
               <SelectContent>
@@ -258,7 +258,6 @@ export default function ManagerDashboard() {
               {sortOrder === 'asc' ? 'Asc' : 'Desc'}
             </button>
           </div>
-        </div>
         </div>
         {viewMode === 'list' ? (
           <div className="overflow-x-auto">
