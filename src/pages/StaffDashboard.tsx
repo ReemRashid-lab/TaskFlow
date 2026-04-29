@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
-import { Clock, AlertCircle, CheckCircle2, UploadCloud } from 'lucide-react';
+import { Clock, AlertCircle, CheckCircle2, UploadCloud, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 
 export default function StaffDashboard() {
@@ -231,14 +231,15 @@ export default function StaffDashboard() {
                   <AlertCircle className="mr-2 h-4 w-4" />
                   Priority: <span className={`ml-1 font-semibold ${getPriorityColor(task.priority)}`}>{task.priority}</span>
                 </div>
+                {task.managerNotes && (
+                  <div className="mt-3 p-3 bg-[#eff6ff] border border-[#dbeafe] rounded-lg">
+                    <div className="flex items-center text-[#1e40af] font-bold text-[0.7rem] mb-1">
+                      <MessageSquare className="mr-2 h-3.5 w-3.5" /> FEEDBACK FROM MANAGER
+                    </div>
+                    <p className="text-[0.825rem] text-[#1e3a8a] italic">"{task.managerNotes}"</p>
+                  </div>
+                )}
               </div>
-
-              {task.managerNotes && (
-                <div className="mt-4 p-3 bg-[#ffedd5] border border-[#fed7aa] rounded-md">
-                  <p className="text-[0.75rem] font-bold text-[#9a3412] mb-1">Manager Notes:</p>
-                  <p className="text-[0.825rem] text-[#c2410c]">{task.managerNotes}</p>
-                </div>
-              )}
             </div>
             <div className="p-4 bg-[#f8fafc] border-t border-[#e2e8f0] flex justify-between">
               {task.status === 'Pending' && (
