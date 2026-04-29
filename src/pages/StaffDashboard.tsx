@@ -6,7 +6,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { format } from 'date-fns';
 import KanbanBoard from '../components/KanbanBoard';
-import { LayoutGrid, List } from 'lucide-react';
+import { LayoutGrid, List, Clock, AlertCircle, MessageSquare, UploadCloud, CheckCircle2 } from 'lucide-react';
 
 export default function StaffDashboard() {
   const [tasks, setTasks] = useState<any[]>([]);

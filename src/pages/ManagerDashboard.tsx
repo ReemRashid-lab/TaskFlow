@@ -5,12 +5,11 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../components/ui/select';
 import { Textarea } from '../components/ui/textarea';
-import { Plus, Search, Filter, Trash2, ArrowUpDown } from 'lucide-react';
+import { Plus, Search, Filter, Trash2, ArrowUpDown, LayoutGrid, List, Clock, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { sendTaskAssignmentEmail } from '../lib/email';
 import AnalyticsSummary from '../components/AnalyticsSummary';
 import KanbanBoard from '../components/KanbanBoard';
-import { LayoutGrid, List, Clock, AlertCircle } from 'lucide-react';
 
 export default function ManagerDashboard() {
   const [tasks, setTasks] = useState<any[]>([]);

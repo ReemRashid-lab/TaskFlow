@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
-import { Briefcase } from 'lucide-react';
+import { Briefcase, UserPlus } from 'lucide-react';
 
 export default function Register() {
   const [staffId, setStaffId] = useState('');
