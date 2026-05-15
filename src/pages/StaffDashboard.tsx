@@ -6,7 +6,7 @@ import { Label } from '../components/ui/label';
 import { Textarea } from '../components/ui/textarea';
 import { format } from 'date-fns';
 import KanbanBoard from '../components/KanbanBoard';
-import { LayoutGrid, List, Clock, AlertCircle, MessageSquare, UploadCloud, CheckCircle2 } from 'lucide-react';
+import { LayoutGrid, List, Clock, AlertCircle, MessageSquare, UploadCloud, CheckCircle2, Sparkles } from 'lucide-react';
 
 export default function StaffDashboard() {
   const [tasks, setTasks] = useState<any[]>([]);
@@ -180,37 +180,50 @@ export default function StaffDashboard() {
           )}
         </div>
       </div>
-      <div className="p-4 bg-muted/50 border-t border-border flex justify-between mt-auto">
-        {task.status === 'Pending' && (
-          <button className="w-full py-2 px-4 bg-background border border-border text-foreground text-sm font-semibold rounded-md hover:bg-accent transition-colors" onClick={() => handleStatusChange(task.id, 'In Progress')}>
-            Start Task
-          </button>
-        )}
-        {(task.status === 'In Progress' || task.status === 'Needs Resubmission') && (
-          task.type === 'Upload' ? (
-            <button 
-              className="w-full py-2 px-4 bg-primary text-primary-foreground text-sm font-semibold rounded-md hover:opacity-90 transition-colors flex items-center justify-center" 
-              onClick={() => {
-                setSelectedTask(task);
-                setSubmitData({ file: null, staffNotes: task.staffNotes || '' });
-                setIsSubmitOpen(true);
-              }}
-            >
-              <UploadCloud className="mr-2 h-4 w-4" /> {task.status === 'Needs Resubmission' ? 'Resubmit' : 'Submit'} Work
+      <div className="p-4 bg-muted/50 border-t border-border flex flex-col gap-2 mt-auto">
+        <div className="flex w-full">
+          {task.status === 'Pending' && (
+            <button className="w-full py-2 px-4 bg-background border border-border text-foreground text-sm font-semibold rounded-md hover:bg-accent transition-colors" onClick={() => handleStatusChange(task.id, 'In Progress')}>
+              Start Task
             </button>
-          ) : (
-            <button 
-              className="w-full py-2 px-4 bg-[#10b981] text-white text-sm font-semibold rounded-md hover:bg-[#059669] transition-colors flex items-center justify-center" 
-              onClick={() => handleStatusChange(task.id, 'Completed')}
-            >
-              <CheckCircle2 className="mr-2 h-4 w-4" /> Mark as Done
+          )}
+          {(task.status === 'In Progress' || task.status === 'Needs Resubmission') && (
+            task.type === 'Upload' ? (
+              <button 
+                className="w-full py-2 px-4 bg-primary text-primary-foreground text-sm font-semibold rounded-md hover:opacity-90 transition-colors flex items-center justify-center" 
+                onClick={() => {
+                  setSelectedTask(task);
+                  setSubmitData({ file: null, staffNotes: task.staffNotes || '' });
+                  setIsSubmitOpen(true);
+                }}
+              >
+                <UploadCloud className="mr-2 h-4 w-4" /> {task.status === 'Needs Resubmission' ? 'Resubmit' : 'Submit'} Work
+              </button>
+            ) : (
+              <button 
+                className="w-full py-2 px-4 bg-[#10b981] text-white text-sm font-semibold rounded-md hover:bg-[#059669] transition-colors flex items-center justify-center" 
+                onClick={() => handleStatusChange(task.id, 'Completed')}
+              >
+                <CheckCircle2 className="mr-2 h-4 w-4" /> Mark as Done
+              </button>
+            )
+          )}
+          {task.status === 'Completed' && (
+            <button className="w-full py-2 px-4 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-sm font-semibold rounded-md flex items-center justify-center cursor-not-allowed" disabled>
+              <CheckCircle2 className="mr-2 h-4 w-4" /> Submitted
             </button>
-          )
-        )}
-        {task.status === 'Completed' && (
-          <button className="w-full py-2 px-4 bg-green-100 dark:bg-green-900/30 border border-green-200 dark:border-green-800 text-green-700 dark:text-green-400 text-sm font-semibold rounded-md flex items-center justify-center cursor-not-allowed" disabled>
-            <CheckCircle2 className="mr-2 h-4 w-4" /> Submitted
-          </button>
+          )}
+        </div>
+        {task.status !== 'Completed' && (
+          <a 
+            href={`https://chatgpt.com/?q=${encodeURIComponent(`I need help with this task: "${task.title}". Description: ${task.description}. How can I approach this?`)}`}
+            target="_blank" 
+            rel="noreferrer"
+            className="w-full py-2 px-4 bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/5 dark:to-indigo-900/5 border border-purple-100 dark:border-purple-900/30 text-purple-700 dark:text-purple-300 text-xs font-bold rounded-md hover:from-purple-100 hover:to-indigo-100 dark:hover:from-purple-900/10 dark:hover:to-indigo-900/10 transition-all flex items-center justify-center gap-2 shadow-sm"
+          >
+            <Sparkles className="h-3.5 w-3.5" />
+            ASK CHATGPT FOR HELP
+          </a>
         )}
       </div>
     </div>
